@@ -3,9 +3,9 @@
 const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
-const { getKey, callOpenAI, KeygenError } = require('./lib/ai');
+const { getKey, callOpenAI, KeygenError } = require('../lib/ai');
 
-const PUBLIC_DIR = path.join(__dirname, 'public');
+const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',

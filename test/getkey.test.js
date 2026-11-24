@@ -36,7 +36,7 @@ test('reuses the same key until it expires', async () => {
 
   process.env.KEYGEN_URL = keygen.url;
   process.env.KEYGEN_TOKEN = 'test-token';
-  const { getKey } = require('../server');
+  const { getKey } = require('../lib/ai');
 
   assert.equal(await getKey({ refresh: true }), 'key-one');
   assert.equal(await getKey(), 'key-one');
@@ -57,7 +57,7 @@ test('asks for a new key after expiresAt', async () => {
   });
 
   process.env.KEYGEN_URL = keygen.url;
-  const { getKey } = require('../server');
+  const { getKey } = require('../lib/ai');
 
   assert.equal(await getKey({ refresh: true }), 'key-1');
   assert.equal(await getKey(), 'key-2');
@@ -79,7 +79,7 @@ test('shows error.message, logs error.fix, and tries only once', async () => {
   });
 
   process.env.KEYGEN_URL = keygen.url;
-  const { getKey, KeygenError } = require('../server');
+  const { getKey, KeygenError } = require('../lib/ai');
   const logFile = path.join(__dirname, '..', 'logs', 'server.log');
   const before = fs.existsSync(logFile) ? fs.readFileSync(logFile, 'utf8') : '';
 
@@ -121,7 +121,7 @@ test('refreshes the key when OpenAI rejects it', async () => {
 
   process.env.KEYGEN_URL = keygen.url;
   process.env.OPENAI_BASE_URL = openai.url;
-  const { getKey, callOpenAI } = require('../server');
+  const { getKey, callOpenAI } = require('../lib/ai');
 
   await getKey({ refresh: true });
   assert.equal(
