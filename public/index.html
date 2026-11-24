@@ -3,18 +3,21 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Counselor</title>
+  <title>Counselor — a second opinion that disagrees</title>
   <style>
     :root {
       color-scheme: light;
       --ink: #1f2937;
       --muted: #5b6472;
-      --paper: #f7f5f0;
+      --paper: #f4f1ea;
       --card: #ffffff;
       --accent: #2f6f62;
       --accent-dark: #24574d;
+      --accent-soft: #edf5f2;
+      --warm: #b7791f;
       --line: #ded8cc;
       --error: #9b2c2c;
+      --shadow: 0 18px 50px rgba(31, 41, 55, 0.08);
     }
 
     * { box-sizing: border-box; }
@@ -22,155 +25,758 @@
     body {
       margin: 0;
       min-height: 100vh;
-      background: var(--paper);
+      background:
+        radial-gradient(circle at top left, rgba(47, 111, 98, 0.10), transparent 34rem),
+        var(--paper);
       color: var(--ink);
       font: 17px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      display: grid;
-      place-items: center;
-      padding: 24px;
     }
 
-    main {
-      width: min(640px, 100%);
+    button, textarea { font: inherit; }
+
+    .app {
+      width: min(1180px, 100%);
+      margin: 0 auto;
+      padding: 24px;
+      display: grid;
+      grid-template-columns: 300px minmax(0, 1fr);
+      gap: 24px;
+      align-items: start;
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 24px;
       background: var(--card);
       border: 1px solid var(--line);
-      border-radius: 20px;
-      padding: 32px;
-      box-shadow: 0 18px 50px rgba(31, 41, 55, 0.08);
+      border-radius: 22px;
+      padding: 20px;
+      box-shadow: var(--shadow);
     }
 
-    h1 {
-      margin: 0 0 8px;
-      font-size: 30px;
-      letter-spacing: -0.02em;
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
 
-    .intro {
-      margin: 0 0 24px;
+    .mark {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: var(--accent);
+      color: white;
+      display: grid;
+      place-items: center;
+      font-size: 24px;
+      font-weight: 800;
+      flex: none;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 23px;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+    }
+
+    .brand p {
+      margin: 3px 0 0;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    .new-idea {
+      width: 100%;
+      margin: 20px 0 18px;
+      padding: 11px 14px;
+      border: 1px dashed #b9b1a2;
+      border-radius: 12px;
+      background: #fbf9f4;
+      color: var(--accent-dark);
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .new-idea:hover {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .saved-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .saved-head h2 {
+      margin: 0;
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
       color: var(--muted);
     }
 
-    label {
+    .count {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .idea-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 7px;
+      max-height: 340px;
+      overflow: auto;
+    }
+
+    .idea-item {
+      display: flex;
+      align-items: stretch;
+      gap: 2px;
+    }
+
+    .idea-button {
+      flex: 1;
+      min-width: 0;
+      text-align: left;
+      padding: 10px 11px;
+      border: 1px solid transparent;
+      border-radius: 12px;
+      background: #f8f6f1;
+      color: var(--ink);
+      cursor: pointer;
+    }
+
+    .idea-button:hover {
+      border-color: #c9c0b0;
+    }
+
+    .idea-button.selected {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .idea-title {
       display: block;
+      font-size: 13.5px;
+      font-weight: 650;
+      line-height: 1.3;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    .idea-meta {
+      display: block;
+      margin-top: 4px;
+      font-size: 11px;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .remove {
+      border: 0;
+      background: transparent;
+      color: #9a9284;
+      font-size: 19px;
+      line-height: 1;
+      padding: 4px 6px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .remove:hover {
+      background: #fdf2f2;
+      color: var(--error);
+    }
+
+    .save-note {
+      margin: 14px 0 0;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .workspace { min-width: 0; }
+
+    .hero { margin: 6px 0 22px; }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .hero h2 {
+      margin: 0;
+      max-width: 720px;
+      font-size: clamp(30px, 4vw, 44px);
+      line-height: 1.08;
+      letter-spacing: -0.035em;
+    }
+
+    .hero p {
+      max-width: 650px;
+      margin: 12px 0 0;
+      color: var(--muted);
+    }
+
+    .modes {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .mode {
+      text-align: left;
+      padding: 13px 15px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: #fffdf8;
+      color: var(--ink);
+      cursor: pointer;
+      transition: border-color 120ms ease, background 120ms ease, box-shadow 120ms ease;
+    }
+
+    .mode:hover {
+      border-color: #bfb6a6;
+    }
+
+    .mode.active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      box-shadow: 0 0 0 3px rgba(47, 111, 98, 0.12);
+    }
+
+    .mode-title {
+      display: block;
+      font-weight: 750;
+      font-size: 15px;
+      line-height: 1.25;
+    }
+
+    .mode-copy {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 12.5px;
+      line-height: 1.35;
+    }
+
+    .ask {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .field-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
       margin-bottom: 8px;
-      font-weight: 600;
+    }
+
+    label {
+      font-weight: 750;
+    }
+
+    .example {
+      border: 0;
+      background: transparent;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      cursor: pointer;
+      padding: 0;
     }
 
     textarea {
       width: 100%;
+      min-height: 132px;
       resize: vertical;
       padding: 14px;
       border: 1px solid var(--line);
       border-radius: 12px;
-      font: inherit;
-      color: inherit;
       background: #fffdf8;
+      color: var(--ink);
+      line-height: 1.5;
     }
 
     textarea:focus {
-      outline: 3px solid rgba(47, 111, 98, 0.2);
+      outline: 3px solid rgba(47, 111, 98, 0.18);
       border-color: var(--accent);
     }
 
-    button {
+    .actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
       margin-top: 14px;
-      padding: 12px 20px;
+      flex-wrap: wrap;
+    }
+
+    .hint {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12.5px;
+      line-height: 1.4;
+    }
+
+    .primary {
+      padding: 12px 22px;
       border: 0;
       border-radius: 999px;
       background: var(--accent);
       color: white;
-      font: inherit;
-      font-weight: 600;
+      font-weight: 750;
       cursor: pointer;
+      white-space: nowrap;
     }
 
-    button:hover { background: var(--accent-dark); }
-    button:disabled { opacity: 0.6; cursor: wait; }
+    .primary:hover { background: var(--accent-dark); }
 
-    #answer {
-      margin-top: 24px;
-      padding: 18px;
-      border-radius: 14px;
-      background: #f2f7f5;
+    .primary:disabled,
+    .mode:disabled,
+    .example:disabled,
+    .new-idea:disabled,
+    .remove:disabled {
+      opacity: 0.55;
+      cursor: wait;
+    }
+
+    .answer-panel {
+      margin-top: 20px;
+      padding: 20px;
+      background: var(--card);
       border: 1px solid #cfe1db;
-      white-space: pre-wrap;
+      border-left: 5px solid var(--accent);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
     }
 
-    #error {
-      margin-top: 18px;
-      padding: 14px;
+    .answer-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .badge {
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: var(--accent);
+      color: white;
+      font-size: 10.5px;
+      font-weight: 800;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+
+    .answer-mode {
+      color: var(--muted);
+      font-size: 12.5px;
+    }
+
+    .answer {
+      white-space: pre-wrap;
+      line-height: 1.65;
+      font-size: 16px;
+    }
+
+    .error {
+      margin: 18px 0 0;
+      padding: 14px 16px;
+      border: 1px solid #f0caca;
       border-radius: 12px;
       background: #fdf2f2;
-      border: 1px solid #f0caca;
       color: var(--error);
+      line-height: 1.5;
     }
 
-    @media (max-width: 520px) {
-      main { padding: 22px; }
-      h1 { font-size: 26px; }
+    .safety {
+      margin-top: 26px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 12.5px;
+      line-height: 1.6;
+    }
+
+    .safety a {
+      color: var(--accent);
+      font-weight: 750;
+    }
+
+    @media (max-width: 900px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar { position: static; }
+      .idea-list { max-height: 220px; }
+    }
+
+    @media (max-width: 560px) {
+      .app { padding: 14px; gap: 14px; }
+      .sidebar, .ask, .answer-panel { padding: 16px; }
+      .modes { grid-template-columns: 1fr; }
+      .hero h2 { font-size: 31px; }
+      .actions { align-items: stretch; }
+      .primary { width: 100%; }
     }
   </style>
 </head>
 <body>
-  <main>
-    <h1>Counselor</h1>
-    <p class="intro">
-      Not sure what could happen next? Describe the decision you are facing,
-      and Counselor will help you see some possibilities.
-    </p>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="mark" aria-hidden="true">C</div>
+        <div>
+          <h1>Counselor</h1>
+          <p>Second opinion, not a yes-machine.</p>
+        </div>
+      </div>
 
-    <form id="ask">
-      <label for="message">What are you trying to plan?</label>
-      <textarea
-        id="message"
-        name="message"
-        rows="4"
-        placeholder="For example: I am deciding whether to join a club this term."
-        required
-      ></textarea>
-      <button type="submit">Show me possibilities</button>
-    </form>
+      <button id="new-idea" class="new-idea" type="button">+ New idea</button>
 
-    <section id="answer" aria-live="polite" hidden></section>
-    <p id="error" role="alert" hidden></p>
-  </main>
+      <div class="saved-head">
+        <h2>My ideas</h2>
+        <span id="idea-count" class="count"></span>
+      </div>
+      <ul id="idea-list" class="idea-list"></ul>
+      <p class="save-note">Saves on this computer only for now.</p>
+    </aside>
 
-  <script>
+    <main class="workspace">
+      <header class="hero">
+        <p class="eyebrow">A second opinion that isn’t afraid to disagree</p>
+        <h2>Think through what might happen before you commit.</h2>
+        <p>
+          ChatGPT tends to agree with you. Counselor is built to challenge your plan,
+          show the risks, and help you find a better next step.
+        </p>
+      </header>
+
+      <section class="modes" aria-label="Choose what you need">
+        <button type="button" class="mode active" data-mode="pros-cons" aria-pressed="true">
+          <span class="mode-title">1. Pros &amp; cons</span>
+          <span class="mode-copy">See both sides before you commit.</span>
+        </button>
+        <button type="button" class="mode" data-mode="challenge" aria-pressed="false">
+          <span class="mode-title">2. Challenge my assumptions</span>
+          <span class="mode-copy">Find the weak spots in your plan.</span>
+        </button>
+        <button type="button" class="mode" data-mode="risks" aria-pressed="false">
+          <span class="mode-title">3. Risks</span>
+          <span class="mode-copy">What could go wrong?</span>
+        </button>
+        <button type="button" class="mode" data-mode="question" aria-pressed="false">
+          <span class="mode-title">4. Ask a question</span>
+          <span class="mode-copy">Get a clear, safe answer.</span>
+        </button>
+      </section>
+
+      <form id="ask" class="ask">
+        <div class="field-head">
+          <label id="message-label" for="message">Your idea</label>
+          <button type="button" id="example" class="example">Try an example</button>
+        </div>
+        <textarea
+          id="message"
+          name="message"
+          rows="5"
+          placeholder="Describe the idea you are thinking about..."
+          required
+        ></textarea>
+        <div class="actions">
+          <p class="hint">Counselor will not always agree. That is the point.</p>
+          <button type="submit" id="submit" class="primary">Show pros &amp; cons</button>
+        </div>
+      </form>
+
+      <section id="answer-panel" class="answer-panel" hidden aria-live="polite">
+        <div class="answer-head">
+          <span class="badge">Second opinion</span>
+          <span id="answer-mode" class="answer-mode"></span>
+        </div>
+        <div id="answer" class="answer"></div>
+      </section>
+
+      <p id="error" class="error" role="alert" hidden></p>
+
+      <footer class="safety">
+        <strong>Safety first.</strong> Counselor does not give medical, legal, or emergency
+        advice. If you might hurt yourself or someone else, call or text
+        <a href="tel:988">988</a> and talk to a trusted adult right now.
+      </footer>
+    </main>
+  </div>
+
+  <script type="module">
+    import { listIdeas, saveIdea, deleteIdea } from './storage.js';
+
+    const MODES = {
+      'pros-cons': {
+        label: 'Pros & cons',
+        labelText: 'Your idea',
+        placeholder: 'Describe the idea you are thinking about...',
+        example: 'I want to start a weekend dog-walking service in my neighborhood.',
+        button: 'Show pros & cons',
+      },
+      challenge: {
+        label: 'Challenge my assumptions',
+        labelText: 'Your plan',
+        placeholder: 'Describe your plan and what you are assuming will happen...',
+        example: 'I plan to finish my science project in one weekend because I work best under pressure.',
+        button: 'Challenge my plan',
+      },
+      risks: {
+        label: 'Risks',
+        labelText: 'Your idea',
+        placeholder: 'Describe the idea and who it affects...',
+        example: 'I want to lend my friend my expensive headphones for a school trip.',
+        button: 'Show risks',
+      },
+      question: {
+        label: 'Ask a question',
+        labelText: 'Your question',
+        placeholder: 'Ask a question about planning, time, or what to do next...',
+        example: 'How much time should I leave for a group project?',
+        button: 'Ask Counselor',
+      },
+    };
+
+    const modeButtons = [...document.querySelectorAll('.mode')];
     const form = document.querySelector('#ask');
-    const message = document.querySelector('#message');
-    const button = form.querySelector('button');
-    const answer = document.querySelector('#answer');
-    const error = document.querySelector('#error');
+    const messageInput = document.querySelector('#message');
+    const messageLabel = document.querySelector('#message-label');
+    const submitButton = document.querySelector('#submit');
+    const exampleButton = document.querySelector('#example');
+    const answerPanel = document.querySelector('#answer-panel');
+    const answerBox = document.querySelector('#answer');
+    const answerMode = document.querySelector('#answer-mode');
+    const errorBox = document.querySelector('#error');
+    const ideaList = document.querySelector('#idea-list');
+    const ideaCount = document.querySelector('#idea-count');
+    const newIdeaButton = document.querySelector('#new-idea');
+
+    let mode = 'pros-cons';
+    let busy = false;
+    let currentIdeaId = null;
+    let currentIdeaTitle = '';
+
+    function config() {
+      return MODES[mode] || MODES['pros-cons'];
+    }
+
+    function setMode(next) {
+      if (!MODES[next]) return;
+      mode = next;
+      modeButtons.forEach((button) => {
+        const active = button.dataset.mode === mode;
+        button.classList.toggle('active', active);
+        button.setAttribute('aria-pressed', String(active));
+      });
+      messageLabel.textContent = config().labelText;
+      messageInput.placeholder = config().placeholder;
+      submitButton.textContent = config().button;
+    }
+
+    function hideAnswer() {
+      answerPanel.hidden = true;
+      answerBox.textContent = '';
+    }
+
+    function showAnswer(text, answerModeKey) {
+      answerBox.textContent = text;
+      answerMode.textContent = (MODES[answerModeKey] || MODES['pros-cons']).label;
+      answerPanel.hidden = false;
+      answerPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function hideError() {
+      errorBox.hidden = true;
+      errorBox.textContent = '';
+    }
+
+    function showError(message) {
+      errorBox.textContent = message;
+      errorBox.hidden = false;
+      hideAnswer();
+    }
+
+    function renderIdeas() {
+      const ideas = listIdeas();
+      ideaCount.textContent = ideas.length ? String(ideas.length) : '';
+      ideaList.replaceChildren();
+
+      ideas.forEach((idea) => {
+        const item = document.createElement('li');
+        item.className = 'idea-item';
+
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'idea-button';
+        if (idea.id === currentIdeaId) button.classList.add('selected');
+
+        const title = document.createElement('span');
+        title.className = 'idea-title';
+        title.textContent = idea.title;
+
+        const meta = document.createElement('span');
+        meta.className = 'idea-meta';
+        const modeLabel = (MODES[idea.mode] || MODES['pros-cons']).label;
+        meta.textContent = `${modeLabel} · ${idea.answer ? 'answered' : 'sample'}`;
+
+        button.append(title, meta);
+        button.addEventListener('click', () => loadIdea(idea));
+
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'remove';
+        remove.setAttribute('aria-label', `Remove ${idea.title}`);
+        remove.textContent = '×';
+        remove.addEventListener('click', (event) => {
+          event.stopPropagation();
+          deleteIdea(idea.id);
+          if (currentIdeaId === idea.id) {
+            currentIdeaId = null;
+            currentIdeaTitle = '';
+          }
+          renderIdeas();
+        });
+
+        item.append(button, remove);
+        ideaList.append(item);
+      });
+    }
+
+    function loadIdea(idea) {
+      currentIdeaId = idea.id;
+      currentIdeaTitle = idea.title;
+      messageInput.value = idea.title;
+      setMode(idea.mode);
+      hideError();
+      if (idea.answer) showAnswer(idea.answer, idea.mode);
+      else hideAnswer();
+      renderIdeas();
+      messageInput.focus();
+    }
+
+    modeButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        if (!busy) setMode(button.dataset.mode);
+      });
+    });
+
+    exampleButton.addEventListener('click', () => {
+      messageInput.value = config().example;
+      messageInput.focus();
+    });
+
+    newIdeaButton.addEventListener('click', () => {
+      currentIdeaId = null;
+      currentIdeaTitle = '';
+      messageInput.value = '';
+      setMode('pros-cons');
+      hideAnswer();
+      hideError();
+      renderIdeas();
+      messageInput.focus();
+    });
 
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
-      error.hidden = true;
-      answer.hidden = true;
-      button.disabled = true;
-      button.textContent = 'Thinking...';
+      if (busy) return;
+
+      const text = messageInput.value.trim();
+      if (!text) {
+        messageInput.focus();
+        return;
+      }
+
+      hideError();
+      hideAnswer();
+      busy = true;
+      submitButton.disabled = true;
+      submitButton.textContent = 'Thinking…';
+      modeButtons.forEach((button) => { button.disabled = true; });
+      exampleButton.disabled = true;
+      newIdeaButton.disabled = true;
+
+      const sameIdea = Boolean(currentIdeaId && text === currentIdeaTitle);
+      const saved = saveIdea({
+        id: sameIdea ? currentIdeaId : undefined,
+        title: text,
+        mode,
+        answer: '',
+      });
+      if (saved) {
+        currentIdeaId = saved.id;
+        currentIdeaTitle = text;
+        renderIdeas();
+      }
 
       try {
         const response = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: message.value }),
+          body: JSON.stringify({ message: text, mode }),
         });
-        const data = await response.json();
 
-        if (!response.ok || data.error) {
-          throw new Error((data.error && data.error.message) || 'Something went wrong.');
+        let data = null;
+        try {
+          data = await response.json();
+        } catch {
+          data = null;
         }
 
-        answer.textContent = data.answer;
-        answer.hidden = false;
+        if (!response.ok || (data && data.error)) {
+          throw new Error(
+            (data && data.error && data.error.message) || 'Counselor could not answer right now.'
+          );
+        }
+        if (!data || !data.answer) {
+          throw new Error('Counselor sent an empty answer.');
+        }
+
+        showAnswer(data.answer, mode);
+        saveIdea({ id: currentIdeaId, title: text, mode, answer: data.answer });
+        renderIdeas();
       } catch (problem) {
-        error.textContent = problem.message;
-        error.hidden = false;
+        const friendly =
+          problem instanceof TypeError
+            ? 'I could not reach the server. Please check your internet connection and try again.'
+            : problem.message;
+        showError(friendly);
       } finally {
-        button.disabled = false;
-        button.textContent = 'Show me possibilities';
+        busy = false;
+        submitButton.disabled = false;
+        submitButton.textContent = config().button;
+        modeButtons.forEach((button) => { button.disabled = false; });
+        exampleButton.disabled = false;
+        newIdeaButton.disabled = false;
       }
     });
+
+    setMode(mode);
+    renderIdeas();
   </script>
 </body>
 </html>

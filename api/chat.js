@@ -1,6 +1,6 @@
 'use strict';
 
-const { callOpenAI } = require('../lib/ai');
+const { askAI } = require('../lib/ask-ai');
 
 function bodyOf(req) {
   if (req.body && typeof req.body === 'object') return req.body;
@@ -22,14 +22,17 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  const message = String(bodyOf(req).message || '').trim();
+  const payload = bodyOf(req);
+  const message = String(payload.message || '').trim();
+  const mode = String(payload.mode || 'pros-cons');
+
   if (!message) {
-    res.status(400).json({ error: { message: 'Please type a question first.' } });
+    res.status(400).json({ error: { message: 'Please type an idea or question first.' } });
     return;
   }
 
   try {
-    const answer = await callOpenAI([{ role: 'user', content: message }]);
+    const answer = await askAI({ mode, message });
     res.status(200).json({ answer });
   } catch (error) {
     // error.fix is written to the logs by lib/ai.js; the page only sees the message.

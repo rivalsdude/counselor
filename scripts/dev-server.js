@@ -3,7 +3,7 @@
 const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
-const { getKey, callOpenAI, KeygenError } = require('../lib/ai');
+const { askAI } = require('../lib/ask-ai');
 
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 
@@ -75,12 +75,13 @@ const server = http.createServer(async (req, res) => {
       }
 
       const message = String(payload.message || '').trim();
+      const mode = String(payload.mode || 'pros-cons');
       if (!message) {
-        return sendJson(res, 400, { error: { message: 'Please type a question first.' } });
+        return sendJson(res, 400, { error: { message: 'Please type an idea or question first.' } });
       }
 
       try {
-        const answer = await callOpenAI([{ role: 'user', content: message }]);
+        const answer = await askAI({ mode, message });
         return sendJson(res, 200, { answer });
       } catch (error) {
         // error.fix is already in the log; the page only sees the message.
@@ -109,4 +110,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { getKey, callOpenAI, server, KeygenError };
+module.exports = { server };
