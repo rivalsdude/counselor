@@ -642,7 +642,12 @@
         const meta = document.createElement('span');
         meta.className = 'idea-meta';
         const modeLabel = (MODES[idea.mode] || MODES['pros-cons']).label;
-        meta.textContent = `${modeLabel} · ${idea.answer ? 'answered' : 'sample'}`;
+        const status = idea.answer
+          ? 'answered'
+          : idea.id.startsWith('sample-')
+            ? 'sample'
+            : 'saved';
+        meta.textContent = `${modeLabel} · ${status}`;
 
         button.append(title, meta);
         button.addEventListener('click', () => loadIdea(idea));
